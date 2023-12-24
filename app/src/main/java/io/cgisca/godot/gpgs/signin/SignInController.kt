@@ -39,6 +39,8 @@ class SignInController(
                 .silentSignIn()
                 .addOnCompleteListener(activity) { task ->
                     if (task.isSuccessful) {
+                        Log.i("godot","Success To Sign In")
+
                         val googleSignInAccount = task.result
                         if (googleSignInAccount != null) {
                             userProfile.let {
@@ -53,6 +55,8 @@ class SignInController(
                         signInListener.onSignedInSuccessfully(userProfile)
                         enablePopUps()
                     } else {
+                        Log.i("godot","Not success To Sign In")
+
                         val intent = googleSignInClient.signInIntent
                         activity.startActivityForResult(intent, RC_SIGN_IN)
                     }

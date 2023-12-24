@@ -11,6 +11,7 @@ import com.google.android.gms.games.snapshot.Snapshot
 import com.google.android.gms.games.snapshot.SnapshotMetadataChange
 import com.google.android.gms.tasks.Continuation
 import io.cgisca.godot.gpgs.ConnectionController
+import org.godotengine.godot.Dictionary
 import java.io.IOException
 
 class SavedGamesController(
@@ -107,6 +108,7 @@ class SavedGamesController(
         if (connectionController.isConnected().first && googleSignInAccount != null) {
             val snapshotsClient = Games.getSnapshotsClient(activity, googleSignInAccount)
             val conflictResolutionPolicy = SnapshotsClient.RESOLUTION_POLICY_MOST_RECENTLY_MODIFIED
+            var lastModifiedTimestamp : Long = 0
             snapshotsClient.open(gameName, true, conflictResolutionPolicy)
                 .addOnFailureListener {
                     savedGamesListener.onSavedGameLoadFailed()
@@ -115,6 +117,7 @@ class SavedGamesController(
                     val snapshot = task.result
                     try {
                         snapshot?.data?.let {
+                            lastModifiedTimestamp = it.metadata.lastModifiedTimestamp
                             return@Continuation it.snapshotContents.readFully()
                         }
                         return@Continuation null
@@ -126,7 +129,9 @@ class SavedGamesController(
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         task.result?.let {
-                            val data = toStringData(it)
+
+                            var data = toStringData(it).trimEnd().dropLast(1)
+                            data += ", \"lastModifiedTimestamp\" : $lastModifiedTimestamp}"
                             savedGamesListener.onSavedGameLoadSuccess(data)
                         }
                     } else {
